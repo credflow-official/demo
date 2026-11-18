@@ -348,13 +348,9 @@
         </div>
 
         <div class="form-group">
-          <label>Preferred Demo Slot <span class="req">*</span></label>
+          <label>Preferred Demo Date & Slot <span class="req">*</span></label>
           <select id="cust_slot" required>
-            <option value="10:00 AM – 12:00 PM">🕒 10:00 AM – 12:00 PM (Morning)</option>
-            <option value="12:00 PM – 02:00 PM">🕒 12:00 PM – 02:00 PM (Afternoon)</option>
-            <option value="02:00 PM – 04:00 PM">🕒 02:00 PM – 04:00 PM (Post-Lunch)</option>
-            <option value="04:00 PM – 06:00 PM">🕒 04:00 PM – 06:00 PM (Evening)</option>
-            <option value="05:00 PM – 07:00 PM">🕒 05:00 PM – 07:00 PM (Late Evening)</option>
+            <option value="">Loading available slots...</option>
           </select>
         </div>
 
@@ -383,7 +379,69 @@
       if (nameParam) document.getElementById('cust_name').value = nameParam;
       if (emailParam) document.getElementById('cust_email').value = emailParam;
       if (phoneParam) document.getElementById('cust_phone').value = phoneParam;
+      populateSlots();
     });
+
+    function populateSlots() {
+      const slotSelect = document.getElementById("cust_slot");
+      if (!slotSelect) return;
+      slotSelect.innerHTML = "";
+
+      const today = new Date();
+      const days = [];
+      let offset = 1; // start from tomorrow
+
+      // If early in the morning before 12 PM, include today
+      if (today.getHours() < 12) {
+        offset = 0;
+      }
+
+      while (days.length < 3) {
+        const d = new Date();
+        d.setDate(today.getDate() + offset);
+        if (d.getDay() !== 0) { // Skip Sunday
+          days.push(new Date(d));
+        }
+        offset++;
+      }
+
+      const times = [
+        "10:00 AM – 12:00 PM (Morning)",
+        "12:00 PM – 02:00 PM (Afternoon)",
+        "02:00 PM – 04:00 PM (Post-Lunch)",
+        "04:00 PM – 06:00 PM (Evening)",
+        "05:00 PM – 07:00 PM (Late Evening)"
+      ];
+
+      days.forEach((day, idx) => {
+        const isToday = day.toDateString() === today.toDateString();
+        const tomorrow = new Date();
+        tomorrow.setDate(today.getDate() + 1);
+        const isTomorrow = day.toDateString() === tomorrow.toDateString();
+
+        let dayTitle = "";
+        if (isToday) dayTitle = "Today";
+        else if (isTomorrow) dayTitle = "Tomorrow";
+        else dayTitle = day.toLocaleDateString("en-US", { weekday: "short" });
+
+        const dateStr = day.toLocaleDateString("en-US", { day: "numeric", month: "short" });
+        const groupLabel = `📅 ${dayTitle} (${dateStr})`;
+
+        const group = document.createElement("optgroup");
+        group.label = groupLabel;
+
+        times.forEach(t => {
+          const opt = document.createElement("option");
+          const timeSlot = t.split(" (")[0];
+          const fullValue = `${dateStr} (${dayTitle}) • ${timeSlot}`;
+          opt.value = fullValue;
+          opt.textContent = `🕒 ${t}`;
+          group.appendChild(opt);
+        });
+
+        slotSelect.appendChild(group);
+      });
+    }
 
     const SCRIPT_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbzsqYhIBsYXC4ZgkmSUP6-0x03QkJ0JdMUr-7yxdRBhxlqFrZhQGdDfedW2hDflUSVl/exec";
 
